@@ -1,7 +1,7 @@
 # 角色认知插件
 
 [![Version](https://img.shields.io/badge/version-2.0.2-blue.svg)](https://github.com/TARS-snail/astrbot_plugin_self_recognition)
-[![AstrBot](https://img.shields.io/badge/AstrBot-3.5+-green.svg)](https://github.com/Soulter/AstrBot)
+[![AstrBot](https://img.shields.io/badge/AstrBot-3.5+-green.svg)](https://github.com/AstrBotDevs/AstrBot)
 
 > 让 AI 认识自己和其他角色的形象，自动识别图片中的角色并以自然方式回应
 
