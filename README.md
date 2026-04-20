@@ -60,7 +60,7 @@
 
 ### 安装插件
 
-将插件目录放入 AstrBot 的 `addons/plugins/` 目录下，重启 AstrBot 即可。
+将插件目录放入 AstrBot 的 `/plugins/` 目录下，重启 AstrBot 即可。
 
 ## ⚙️ 配置
 
