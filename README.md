@@ -207,5 +207,5 @@ MIT License
 
 ## 🙏 致谢
 
-- [AstrBot](https://github.com/Soulter/AstrBot) - 强大的机器人框架
+- [AstrBot](https://github.com/AstrBotDevs/AstrBot) - 强大的机器人框架
 - [Milvus](https://milvus.io/) - 高性能向量数据库
