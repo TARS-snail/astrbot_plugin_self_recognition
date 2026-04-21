@@ -1,6 +1,6 @@
 """
 角色认知插件 - 主入口
-版本: 2.0.0
+版本: 2.1.0
 作者: TARS_snail
 
 让 AI 认识你希望ta记住的形象，自动知道用户发送的图片中是否有这些角色，并以第一人称回应。
@@ -13,6 +13,7 @@ from astrbot.api.event import filter, AstrMessageEvent, MessageChain
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 from astrbot.api.message_components import Image, Plain
+from astrbot.core.agent.message import AssistantMessageSegment, UserMessageSegment, TextPart
 
 from .modules.milvus_manager import MilvusManager
 from .modules.image_processor import ImageProcessor
@@ -20,7 +21,7 @@ from .modules.self_recognition import SelfRecognitionHandler
 from .modules.character_recognition import CharacterRecognitionHandler
 
 
-@register("astrbot_plugin_self_recognition", "TARS_snail", "角色认知插件——让AI认出图片中的自己和其他角色", "2.0.2")
+@register("astrbot_plugin_self_recognition", "TARS_snail", "角色认知插件——让AI认出图片中的自己和其他角色", "2.1.0")
 class SelfRecognitionPlugin(Star):
     """角色认知插件主类"""
     
@@ -41,7 +42,7 @@ class SelfRecognitionPlugin(Star):
         # 初始化模块
         self._init_modules()
         
-        logger.info("[角色认知] 插件初始化完成 v2.0.2")
+        logger.info("[角色认知] 插件初始化完成 v2.1.0")
         logger.info(f"[角色认知] 视觉模型提供商: {self.vision_provider_id}")
         logger.info(f"[角色认知] 特征阈值 - 发色: {self.hair_color_threshold}, 眼白: {self.eye_white_threshold}, 眼瞳: {self.eye_pupil_threshold}, 种族: {self.racial_feature_threshold}")
     
@@ -112,7 +113,7 @@ class SelfRecognitionPlugin(Star):
         
         milvus_status = "✅ 已连接" if self.milvus_manager.is_connected() else f"❌ 未连接 ({self.milvus_manager.get_error()})"
         
-        msg = f"""🧠 角色认知插件当前设置 (v2.0.2)：
+        msg = f"""🧠 角色认知插件当前设置 (v2.1.0)：
 
 📦 Milvus 状态: {milvus_status}
 📍 地址: {self.milvus_manager.milvus_host}:{self.milvus_manager.milvus_port}
@@ -203,6 +204,9 @@ class SelfRecognitionPlugin(Star):
                     event, img_base64, self_features, user_text
                 )
                 await event.send(MessageChain([Plain(reply)]))
+                # 存入对话历史，让AI后续对话能记住看过自己的图片
+                user_msg_text = f"[图片消息] {user_text or '（用户发送了一张图片）'} 图片中检测到AI自己的形象，特征：{self_features}"
+                await self._add_to_conversation_history(event, user_msg_text, reply)
                 return
             
             # 第二步：检查是否是已认识的角色（传入预提取的特征）
@@ -216,6 +220,9 @@ class SelfRecognitionPlugin(Star):
                     event, img_base64, character_name, character_features, user_text
                 )
                 await event.send(MessageChain([Plain(reply)]))
+                # 存入对话历史，让AI后续对话能记住看过该角色的图片
+                user_msg_text = f"[图片消息] {user_text or '（用户发送了一张图片）'} 图片中检测到角色{character_name}，特征：{character_features}"
+                await self._add_to_conversation_history(event, user_msg_text, reply)
                 return
             
             # 第三步：未匹配到任何已认知形象，进行常规识图对话
@@ -296,6 +303,39 @@ class SelfRecognitionPlugin(Star):
             logger.error(f"[角色认知] 获取上下文失败: {e}")
             return ""
     
+    async def _add_to_conversation_history(self, event: AstrMessageEvent, user_msg_text: str, assistant_msg_text: str):
+        """
+        将识别结果和回复存入对话历史，解决AI不知道自己看过图片导致对话跳跃的问题
+        
+        Args:
+            event: 消息事件
+            user_msg_text: 用户消息文本（包含图片描述信息）
+            assistant_msg_text: AI回复文本
+        """
+        try:
+            conv_mgr = self.context.conversation_manager
+            if not conv_mgr:
+                logger.warning("[角色认知] 对话管理器不可用，无法存入对话历史")
+                return
+            
+            uid = event.unified_msg_origin
+            curr_cid = await conv_mgr.get_curr_conversation_id(uid)
+            if not curr_cid:
+                logger.warning("[角色认知] 无法获取当前对话ID，跳过存入对话历史")
+                return
+            
+            user_msg = UserMessageSegment(content=[TextPart(text=user_msg_text)])
+            assistant_msg = AssistantMessageSegment(content=[TextPart(text=assistant_msg_text)])
+            
+            await conv_mgr.add_message_pair(
+                cid=curr_cid,
+                user_message=user_msg,
+                assistant_message=assistant_msg,
+            )
+            logger.info("[角色认知] 已将识别结果和回复存入对话历史")
+        except Exception as e:
+            logger.error(f"[角色认知] 存入对话历史失败: {e}")
+    
     async def _handle_normal_image_conversation(self, event: AstrMessageEvent, img_base64: str, user_text: str):
         """
         处理常规图片对话（未匹配到任何已认知形象时）
@@ -354,6 +394,9 @@ class SelfRecognitionPlugin(Star):
             )
             reply = llm_resp.completion_text
             await event.send(MessageChain([Plain(reply)]))
+            # 存入对话历史，让AI后续对话能记住看过这张图片
+            user_msg_text = f"[图片消息] {user_text or '（用户发送了一张图片）'} 图片内容：{image_analysis}"
+            await self._add_to_conversation_history(event, user_msg_text, reply)
         except Exception as e:
             logger.error(f"[角色认知] LLM 生成回复失败: {e}")
             await event.send(MessageChain([Plain("处理图片时出了点问题，稍后再试试吧。")]))

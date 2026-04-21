@@ -1,38 +1,9 @@
 # 角色认知插件
 
-[![Version](https://img.shields.io/badge/version-2.0.2-blue.svg)](https://github.com/TARS-snail/astrbot_plugin_self_recognition)
-[![AstrBot](https://img.shields.io/badge/AstrBot-3.5+-green.svg)](https://github.com/AstrBotDevs/AstrBot)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/TARS-snail/astrbot_plugin_self_recognition)
+[![AstrBot](https://img.shields.io/badge/AstrBot-3.5+-green.svg)](https://github.com/AstrBotDevs/AstrBot-desktop)
 
 > 让 AI 认识自己和其他角色的形象，自动识别图片中的角色并以自然方式回应
-
----
-
-## ⚠️ 免责声明
-
-本插件由 **AI（GLM-4.7 和 GLM-5.0）** 编写，可能存在以下潜在问题：
-
-### 🔴 已知限制
-- **代码质量**：虽然AI生成的代码经过了测试，但可能存在未发现的bug或性能问题
-- **兼容性**：在不同环境、不同版本的AstrBot或Milvus中可能出现兼容性问题
-- **安全性**：未经过专业的安全审计，可能存在潜在的安全漏洞
-- **维护性**：代码结构由AI生成，后续维护和修改可能需要人工介入
-
-### 📋 使用建议
-1. **测试环境优先**：建议先在测试环境中验证插件功能，确认无误后再用于生产环境
-2. **数据备份**：使用前请备份重要数据，避免因插件问题导致数据丢失
-3. **监控运行**：使用过程中密切关注插件运行状态和日志，发现异常及时处理
-4. **版本更新**：关注插件更新，及时修复已知问题
-
-### ⚖️ 责任声明
-- **不保证可用性**：本插件按"原样"提供，不对任何形式的使用结果做出保证
-- **不承担损失**：因使用本插件造成的任何直接或间接损失，作者不承担责任
-- **开源目的**：本插件开源仅供学习和参考，使用者需自行承担使用风险
-
-### 🤝 反馈与改进
-- 如发现问题或有改进建议，欢迎通过Issue或Pull Request反馈
-- 作者会根据反馈尽力维护和改进插件，但不承诺响应时间
-
----
 
 ## ✨ 功能特点
 
@@ -60,7 +31,7 @@
 
 ### 安装插件
 
-将插件目录放入 AstrBot 的 `/plugins/` 目录下，重启 AstrBot 即可。
+将插件目录放入 AstrBot 的 `addons/plugins/` 目录下，重启 AstrBot 即可。
 
 ## ⚙️ 配置
 
@@ -165,6 +136,19 @@ astrbot_plugin_self_recognition/
 
 ## 🔄 更新日志
 
+### v2.1.0
+- 💾 **对话历史存入**：将图片识别结果和AI回复存入对话历史，解决AI不知道自己看过图片导致对话跳跃的问题
+  - 识别到自己时：存入用户消息（包含图片描述和自身特征）和AI回复
+  - 识别到角色时：存入用户消息（包含图片描述和角色特征）和AI回复
+  - 常规识图时：存入用户消息（包含图片内容描述）和AI回复
+  - 后续对话中AI可以回顾之前看过什么图片、识别了什么角色，保持对话连贯性
+
+### v2.0.2
+- 🗣️ **语言风格保持**：在所有回复生成时，明确要求 LLM 保持与对话上下文一致的语言风格、格式和用语习惯
+  - 自动学习并延续原有的说话方式（如括号描述动作、特殊表达习惯等）
+  - 保持相同的句式结构、语气词和表达习惯
+  - 让回复自然融入之前的对话风格中，提供更连贯的对话体验
+
 ### v2.0.1
 - 👁️ **图片消息优化**：模拟 AI 拥有视觉能力，以"我看到了..."的第一人称视角回应
 - 💬 **上下文回顾**：自动获取最近 5 条对话历史，让回复更加自然连贯
@@ -207,5 +191,5 @@ MIT License
 
 ## 🙏 致谢
 
-- [AstrBot](https://github.com/AstrBotDevs/AstrBot) - 强大的机器人框架
+- [AstrBot](https://github.com/AstrBotDevs/AstrBot-desktop) - 强大的机器人框架
 - [Milvus](https://milvus.io/) - 高性能向量数据库
