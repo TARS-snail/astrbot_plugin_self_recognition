@@ -1,6 +1,6 @@
 # 角色认知插件
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/TARS-snail/astrbot_plugin_self_recognition)
+[![Version](https://img.shields.io/badge/version-2.1.1-blue.svg)](https://github.com/TARS-snail/astrbot_plugin_self_recognition)
 [![AstrBot](https://img.shields.io/badge/AstrBot-3.5+-green.svg)](https://github.com/AstrBotDevs/AstrBot-desktop)
 
 > 让 AI 认识自己和其他角色的形象，自动识别图片中的角色并以自然方式回应
@@ -135,6 +135,10 @@ astrbot_plugin_self_recognition/
 ```
 
 ## 🔄 更新日志
+
+### v2.1.1
+- 🐛 **修复 `/角色列表` 报错**：原代码使用空字符串查询向量搜索导致 Embedding API 报错，改用 Milvus 直接查询（不需要向量搜索）
+- 🛡️ **防御性检查**：在 `get_embedding` 方法入口增加空文本检查，防止空字符串被发送到 Embedding API
 
 ### v2.1.0
 - 💾 **对话历史存入**：将图片识别结果和AI回复存入对话历史，解决AI不知道自己看过图片导致对话跳跃的问题

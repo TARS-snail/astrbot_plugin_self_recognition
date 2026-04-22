@@ -1,5 +1,15 @@
 # 更新日志
 
+## [2.1.1] - 2026-04-22
+
+### 修复
+- **修复 `/角色列表` 指令报错**：原代码使用 `search_memory(query_text="", ...)` 查询角色列表，空字符串导致 Embedding API 返回 `"input.texts should not be null"` 错误
+  - 新增 `query_memories` 方法，使用 Milvus `collection.query()` 直接基于过滤表达式查询记录，无需调用 Embedding API
+  - `list_known_characters` 方法改用 `query_memories` 替代 `search_memory`
+- **防御性检查**：在 `get_embedding` 方法入口增加空文本检查，防止空字符串被发送到 Embedding API
+
+---
+
 ## [2.1.0] - 2026-04-21
 
 ### 新增功能

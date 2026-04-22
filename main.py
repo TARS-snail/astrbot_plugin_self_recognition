@@ -1,6 +1,6 @@
 """
 角色认知插件 - 主入口
-版本: 2.1.0
+版本: 2.1.1
 作者: TARS_snail
 
 让 AI 认识你希望ta记住的形象，自动知道用户发送的图片中是否有这些角色，并以第一人称回应。
@@ -21,7 +21,7 @@ from .modules.self_recognition import SelfRecognitionHandler
 from .modules.character_recognition import CharacterRecognitionHandler
 
 
-@register("astrbot_plugin_self_recognition", "TARS_snail", "角色认知插件——让AI认出图片中的自己和其他角色", "2.1.0")
+@register("astrbot_plugin_self_recognition", "TARS_snail", "角色认知插件——让AI认出图片中的自己和其他角色", "2.1.1")
 class SelfRecognitionPlugin(Star):
     """角色认知插件主类"""
     
@@ -42,7 +42,7 @@ class SelfRecognitionPlugin(Star):
         # 初始化模块
         self._init_modules()
         
-        logger.info("[角色认知] 插件初始化完成 v2.1.0")
+        logger.info("[角色认知] 插件初始化完成 v2.1.1")
         logger.info(f"[角色认知] 视觉模型提供商: {self.vision_provider_id}")
         logger.info(f"[角色认知] 特征阈值 - 发色: {self.hair_color_threshold}, 眼白: {self.eye_white_threshold}, 眼瞳: {self.eye_pupil_threshold}, 种族: {self.racial_feature_threshold}")
     
@@ -113,7 +113,7 @@ class SelfRecognitionPlugin(Star):
         
         milvus_status = "✅ 已连接" if self.milvus_manager.is_connected() else f"❌ 未连接 ({self.milvus_manager.get_error()})"
         
-        msg = f"""🧠 角色认知插件当前设置 (v2.1.0)：
+        msg = f"""🧠 角色认知插件当前设置 (v2.1.1)：
 
 📦 Milvus 状态: {milvus_status}
 📍 地址: {self.milvus_manager.milvus_host}:{self.milvus_manager.milvus_port}
@@ -248,7 +248,7 @@ class SelfRecognitionPlugin(Star):
             格式化的上下文文本
         """
         try:
-            conv_mgr = self.context.conversation_manager
+            conv_mgr = self.context.conversationManager
             if not conv_mgr:
                 logger.warning("[角色认知] 对话管理器不可用")
                 return ""
@@ -313,7 +313,7 @@ class SelfRecognitionPlugin(Star):
             assistant_msg_text: AI回复文本
         """
         try:
-            conv_mgr = self.context.conversation_manager
+            conv_mgr = self.context.conversationManager
             if not conv_mgr:
                 logger.warning("[角色认知] 对话管理器不可用，无法存入对话历史")
                 return
