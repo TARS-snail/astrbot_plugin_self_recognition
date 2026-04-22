@@ -1,5 +1,14 @@
 # 更新日志
 
+## [2.1.2] - 2026-04-22
+
+### 修复
+- **修复对话管理器属性名错误**：原代码使用驼峰格式 `self.context.conversationManager`，现已修正为下划线格式 `self.context.conversation_manager`，符合 AstrBot API 规范
+  - 修复 `_get_recent_context` 方法中的属性调用
+  - 修复 `_add_to_conversation_history` 方法中的属性调用
+
+---
+
 ## [2.1.1] - 2026-04-22
 
 ### 修复

@@ -1,6 +1,6 @@
 name: astrbot_plugin_self_recognition
 display_name: 角色认知
-version: 2.1.1
+version: 2.1.2
 description: 让 AI 认识自己和其他角色的形象，自动识别图片中的角色并以自然方式回应
 author: TARS_snail
 dependencies:
