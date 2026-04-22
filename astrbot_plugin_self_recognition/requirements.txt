@@ -1,2 +1,0 @@
-pymilvus>=2.3.0
-aiohttp>=3.8.0
