@@ -397,22 +397,7 @@ class CharacterRecognitionHandler:
             # 获取最近对话上下文
             recent_context = await self._get_recent_context(event, max_turns=5)
             
-            # 构建系统提示词 - 模拟AI"看到"图片
-            system_prompt = f"""你现在拥有视觉能力，可以看到用户展示给你的图片。
-
-当前情况：你看到了一张图片，图片中的人物是 {character_name}，这是一个你认识的角色。
-
-要求：
-1. 把图片当作你自己"看到"的内容，而不是"用户发送的图片"
-2. 自然地表达你看到这个角色时的反应
-3. 可以聊聊关于这个角色的事情，或者对图片中的场景、动作、表情发表看法
-4. **关键要求：保持与对话上下文中一致的语言风格、格式和用语习惯**
-   - 参考上下文中AI回复的语言风格（如是否使用括号描述动作、特殊的说话方式等）
-   - 保持相同的语言特征，如句式结构、语气词、表达习惯
-   - 让回复自然融入之前的对话风格中
-5. 保持自然的语气，像是在和朋友聊天"""
-
-            # 构建用户消息
+            # 构建用户消息（将图片分析作为用户消息的一部分，保留原有系统提示词）
             context_section = ""
             if recent_context:
                 context_section = f"""
@@ -421,7 +406,9 @@ class CharacterRecognitionHandler:
 """
 
             enhanced_user_message = f"""{context_section}
-【我现在看到的】
+[系统提示：用户发送了一张图片，图片中的人物是你认识的角色 {character_name}]
+
+【图片内容】
 {image_description}
 
 【角色信息】
@@ -430,13 +417,12 @@ class CharacterRecognitionHandler:
 【用户对我说的话】
 {user_text or f'（用户给我看了{character_name}的图片）'}
 
-请基于我看到的图片内容、角色信息以及对话上下文，自然地回应。记住，你是以第一人称视角"看到"这张图片的，图片中是你认识的角色 {character_name}。"""
+请基于图片内容、角色信息以及对话上下文，自然地回应。保持你一贯的语言风格、格式和回复长度习惯。图片中是你认识的角色 {character_name}，请以第一人称视角回应。"""
 
-            # 调用主模型
+            # 调用主模型（不覆盖系统提示词）
             llm_resp = await self.context.llm_generate(
                 chat_provider_id=provider_id,
                 prompt=enhanced_user_message,
-                system_prompt=system_prompt,
                 conversation_id=event.unified_msg_origin
             )
             return llm_resp.completion_text

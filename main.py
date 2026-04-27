@@ -1,6 +1,6 @@
 """
 角色认知插件 - 主入口
-版本: 2.1.2
+版本: 2.1.3
 作者: TARS_snail
 
 让 AI 认识你希望ta记住的形象，自动知道用户发送的图片中是否有这些角色，并以第一人称回应。
@@ -21,7 +21,7 @@ from .modules.self_recognition import SelfRecognitionHandler
 from .modules.character_recognition import CharacterRecognitionHandler
 
 
-@register("astrbot_plugin_self_recognition", "TARS_snail", "角色认知插件——让AI认出图片中的自己和其他角色", "2.1.2")
+@register("astrbot_plugin_self_recognition", "TARS_snail", "角色认知插件——让AI认出图片中的自己和其他角色", "2.1.3")
 class SelfRecognitionPlugin(Star):
     """角色认知插件主类"""
     
@@ -42,7 +42,7 @@ class SelfRecognitionPlugin(Star):
         # 初始化模块
         self._init_modules()
         
-        logger.info("[角色认知] 插件初始化完成 v2.1.2")
+        logger.info("[角色认知] 插件初始化完成 v2.1.3")
         logger.info(f"[角色认知] 视觉模型提供商: {self.vision_provider_id}")
         logger.info(f"[角色认知] 特征阈值 - 发色: {self.hair_color_threshold}, 眼白: {self.eye_white_threshold}, 眼瞳: {self.eye_pupil_threshold}, 种族: {self.racial_feature_threshold}")
     
@@ -113,7 +113,7 @@ class SelfRecognitionPlugin(Star):
         
         milvus_status = "✅ 已连接" if self.milvus_manager.is_connected() else f"❌ 未连接 ({self.milvus_manager.get_error()})"
         
-        msg = f"""🧠 角色认知插件当前设置 (v2.1.2)：
+        msg = f"""🧠 角色认知插件当前设置 (v2.1.3)：
 
 📦 Milvus 状态: {milvus_status}
 📍 地址: {self.milvus_manager.milvus_host}:{self.milvus_manager.milvus_port}
@@ -354,22 +354,7 @@ class SelfRecognitionPlugin(Star):
             # 获取最近对话上下文
             recent_context = await self._get_recent_context(event, max_turns=5)
             
-            # 构建系统提示词 - 模拟AI"看到"图片
-            system_prompt = """你现在拥有视觉能力，可以看到用户展示给你的图片。
-
-当前情况：你看到了一张图片，请以第一人称的视角自然地回应。
-
-要求：
-1. 把图片当作你自己"看到"的内容，而不是"用户发送的图片"
-2. 自然地表达你对图片内容的观察和感受
-3. 结合对话上下文进行回应
-4. **关键要求：保持与对话上下文中一致的语言风格、格式和用语习惯**
-   - 参考上下文中AI回复的语言风格（如是否使用括号描述动作、特殊的说话方式等）
-   - 保持相同的语言特征，如句式结构、语气词、表达习惯
-   - 让回复自然融入之前的对话风格中
-5. 像是在和朋友聊天一样自然地回应"""
-
-            # 构建用户消息
+            # 构建用户消息（将图片分析作为用户消息的一部分，保留原有系统提示词）
             context_section = ""
             if recent_context:
                 context_section = f"""
@@ -378,18 +363,19 @@ class SelfRecognitionPlugin(Star):
 """
 
             enhanced_user_message = f"""{context_section}
-【我现在看到的】
+[系统提示：用户发送了一张图片，以下是对图片内容的分析]
+
+【图片内容】
 {image_analysis}
 
 【用户对我说的话】
 {user_text or '（用户只是给我看了这张图片）'}
 
-请基于我看到的图片内容以及对话上下文，自然地回应。记住，你是以第一人称视角"看到"这张图片的。"""
+请基于图片内容以及对话上下文，自然地回应。保持你一贯的语言风格、格式和回复长度习惯。"""
 
             llm_resp = await self.context.llm_generate(
                 chat_provider_id=provider_id,
                 prompt=enhanced_user_message,
-                system_prompt=system_prompt,
                 conversation_id=event.unified_msg_origin
             )
             reply = llm_resp.completion_text

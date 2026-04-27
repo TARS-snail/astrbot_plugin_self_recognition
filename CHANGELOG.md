@@ -1,5 +1,17 @@
 # 更新日志
 
+## [2.1.3] - 2026-04-27
+
+### 修复
+- **修复图片处理后回复格式/长度突变的问题**：插件处理图片时通过 `llm_generate` 传入了自定义 `system_prompt`，完全覆盖了 AI 原有的角色设定系统提示词，导致回复长度变长、格式风格突变、语气不一致
+  - 将图片分析信息从 `system_prompt` 移到用户 `prompt` 中
+  - 不再覆盖系统提示词，让 LLM 保留原有的角色性格设定和语言风格约束
+  - 修改 `main.py` 的 `_handle_normal_image_conversation`
+  - 修改 `modules/self_recognition.py` 的 `generate_self_response`
+  - 修改 `modules/character_recognition.py` 的 `generate_character_response`
+
+---
+
 ## [2.1.2] - 2026-04-22
 
 ### 修复
