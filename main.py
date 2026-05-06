@@ -1,6 +1,6 @@
 """
 角色认知插件 - 主入口
-版本: 2.1.3
+版本: 2.1.4
 作者: TARS_snail
 
 让 AI 认识你希望ta记住的形象，自动知道用户发送的图片中是否有这些角色，并以第一人称回应。
@@ -21,7 +21,7 @@ from .modules.self_recognition import SelfRecognitionHandler
 from .modules.character_recognition import CharacterRecognitionHandler
 
 
-@register("astrbot_plugin_self_recognition", "TARS_snail", "角色认知插件——让AI认出图片中的自己和其他角色", "2.1.3")
+@register("astrbot_plugin_self_recognition", "TARS_snail", "角色认知插件——让AI认出图片中的自己和其他角色", "2.1.4")
 class SelfRecognitionPlugin(Star):
     """角色认知插件主类"""
     
@@ -42,7 +42,7 @@ class SelfRecognitionPlugin(Star):
         # 初始化模块
         self._init_modules()
         
-        logger.info("[角色认知] 插件初始化完成 v2.1.3")
+        logger.info("[角色认知] 插件初始化完成 v2.1.4")
         logger.info(f"[角色认知] 视觉模型提供商: {self.vision_provider_id}")
         logger.info(f"[角色认知] 特征阈值 - 发色: {self.hair_color_threshold}, 眼白: {self.eye_white_threshold}, 眼瞳: {self.eye_pupil_threshold}, 种族: {self.racial_feature_threshold}")
     
@@ -113,7 +113,7 @@ class SelfRecognitionPlugin(Star):
         
         milvus_status = "✅ 已连接" if self.milvus_manager.is_connected() else f"❌ 未连接 ({self.milvus_manager.get_error()})"
         
-        msg = f"""🧠 角色认知插件当前设置 (v2.1.3)：
+        msg = f"""🧠 角色认知插件当前设置 (v2.1.4)：
 
 📦 Milvus 状态: {milvus_status}
 📍 地址: {self.milvus_manager.milvus_host}:{self.milvus_manager.milvus_port}
@@ -205,7 +205,8 @@ class SelfRecognitionPlugin(Star):
                 )
                 await event.send(MessageChain([Plain(reply)]))
                 # 存入对话历史，让AI后续对话能记住看过自己的图片
-                user_msg_text = f"[图片消息] {user_text or '（用户发送了一张图片）'} 图片中检测到AI自己的形象，特征：{self_features}"
+                observation = f"（你看到的画面：画面中的人物就是你自己，{self_features}）"
+                user_msg_text = f"{observation}\n{user_text}" if user_text else observation
                 await self._add_to_conversation_history(event, user_msg_text, reply)
                 return
             
@@ -221,7 +222,8 @@ class SelfRecognitionPlugin(Star):
                 )
                 await event.send(MessageChain([Plain(reply)]))
                 # 存入对话历史，让AI后续对话能记住看过该角色的图片
-                user_msg_text = f"[图片消息] {user_text or '（用户发送了一张图片）'} 图片中检测到角色{character_name}，特征：{character_features}"
+                observation = f"（你看到的画面：画面中的人物是你认识的{character_name}，{character_features}）"
+                user_msg_text = f"{observation}\n{user_text}" if user_text else observation
                 await self._add_to_conversation_history(event, user_msg_text, reply)
                 return
             
@@ -354,7 +356,7 @@ class SelfRecognitionPlugin(Star):
             # 获取最近对话上下文
             recent_context = await self._get_recent_context(event, max_turns=5)
             
-            # 构建用户消息（将图片分析作为用户消息的一部分，保留原有系统提示词）
+            # 构建用户消息（将图片分析作为视觉输入转述给 LLM，模拟 AI 亲眼看到的画面）
             context_section = ""
             if recent_context:
                 context_section = f"""
@@ -362,16 +364,14 @@ class SelfRecognitionPlugin(Star):
 {recent_context}
 """
 
+            vision_section = f"（你看到的画面：{image_analysis}）"
+            user_section = f'用户对你说："{user_text}"' if user_text else ""
+
             enhanced_user_message = f"""{context_section}
-[系统提示：用户发送了一张图片，以下是对图片内容的分析]
+{vision_section}
+{user_section}
 
-【图片内容】
-{image_analysis}
-
-【用户对我说的话】
-{user_text or '（用户只是给我看了这张图片）'}
-
-请基于图片内容以及对话上下文，自然地回应。保持你一贯的语言风格、格式和回复长度习惯。"""
+请基于你所看到的画面以及对话上下文，自然地回应。保持你一贯的语言风格、格式和回复长度习惯，回复尽量简短（通常1-2句话即可）。不要提及"图片"、"照片"、"截图"或"用户发给我的图"，就像是你自己亲眼看到这个场景一样。"""
 
             llm_resp = await self.context.llm_generate(
                 chat_provider_id=provider_id,
@@ -381,7 +381,8 @@ class SelfRecognitionPlugin(Star):
             reply = llm_resp.completion_text
             await event.send(MessageChain([Plain(reply)]))
             # 存入对话历史，让AI后续对话能记住看过这张图片
-            user_msg_text = f"[图片消息] {user_text or '（用户发送了一张图片）'} 图片内容：{image_analysis}"
+            observation = f"（你看到的画面：{image_analysis}）"
+            user_msg_text = f"{observation}\n{user_text}" if user_text else observation
             await self._add_to_conversation_history(event, user_msg_text, reply)
         except Exception as e:
             logger.error(f"[角色认知] LLM 生成回复失败: {e}")

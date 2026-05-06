@@ -397,7 +397,7 @@ class CharacterRecognitionHandler:
             # 获取最近对话上下文
             recent_context = await self._get_recent_context(event, max_turns=5)
             
-            # 构建用户消息（将图片分析作为用户消息的一部分，保留原有系统提示词）
+            # 构建用户消息（将图片分析作为视觉输入转述给 LLM，模拟 AI 亲眼看到的画面）
             context_section = ""
             if recent_context:
                 context_section = f"""
@@ -405,19 +405,14 @@ class CharacterRecognitionHandler:
 {recent_context}
 """
 
+            vision_section = f"（你看到的画面：{image_description}——画面中的人物是你认识的{character_name}，{character_features}）"
+            user_section = f'用户对你说："{user_text}"' if user_text else ""
+
             enhanced_user_message = f"""{context_section}
-[系统提示：用户发送了一张图片，图片中的人物是你认识的角色 {character_name}]
+{vision_section}
+{user_section}
 
-【图片内容】
-{image_description}
-
-【角色信息】
-这是 {character_name}，特征：{character_features}
-
-【用户对我说的话】
-{user_text or f'（用户给我看了{character_name}的图片）'}
-
-请基于图片内容、角色信息以及对话上下文，自然地回应。保持你一贯的语言风格、格式和回复长度习惯。图片中是你认识的角色 {character_name}，请以第一人称视角回应。"""
+请基于你所看到的画面以及对话上下文，自然地回应。保持你一贯的语言风格、格式和回复长度习惯，回复尽量简短（通常1-2句话即可）。不要提及"图片"、"照片"、"截图"或"用户发给我的图"，就像是你自己亲眼看到这个场景一样。画面中的人物是你认识的角色{character_name}，请以第一人称视角回应。"""
 
             # 调用主模型（不覆盖系统提示词）
             llm_resp = await self.context.llm_generate(
