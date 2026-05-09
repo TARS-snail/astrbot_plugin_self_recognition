@@ -1,5 +1,16 @@
 # 更新日志
 
+## [2.1.5] - 2026-05-09
+
+### 修复
+- **修正会话控制**：参考 AstrBot 官方文档和 `virtual_camera` 插件，修正 `event.stop_event()` 的调用方式
+  - 将所有 command handler 和 event handler 中的 `event.stop_event()` 从开头移到 `finally` 块中
+  - 确保无论会话流程正常结束、超时（`TimeoutError`）还是发生异常，事件都会被正确停止
+  - `on_image_message` 中前置校验失败时直接 `return`，不再调用 `stop_event()`，避免误拦截其他插件消息
+  - 修改 `main.py` 的 `teach_self`、`teach_character`、`list_characters`、`show_settings`、`on_image_message`
+
+---
+
 ## [2.1.4] - 2026-05-06
 
 ### 修复

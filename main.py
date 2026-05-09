@@ -1,6 +1,6 @@
 """
 角色认知插件 - 主入口
-版本: 2.1.4
+版本: 2.1.5
 作者: TARS_snail
 
 让 AI 认识你希望ta记住的形象，自动知道用户发送的图片中是否有这些角色，并以第一人称回应。
@@ -21,7 +21,7 @@ from .modules.self_recognition import SelfRecognitionHandler
 from .modules.character_recognition import CharacterRecognitionHandler
 
 
-@register("astrbot_plugin_self_recognition", "TARS_snail", "角色认知插件——让AI认出图片中的自己和其他角色", "2.1.4")
+@register("astrbot_plugin_self_recognition", "TARS_snail", "角色认知插件——让AI认出图片中的自己和其他角色", "2.1.5")
 class SelfRecognitionPlugin(Star):
     """角色认知插件主类"""
     
@@ -42,7 +42,7 @@ class SelfRecognitionPlugin(Star):
         # 初始化模块
         self._init_modules()
         
-        logger.info("[角色认知] 插件初始化完成 v2.1.4")
+        logger.info("[角色认知] 插件初始化完成 v2.1.5")
         logger.info(f"[角色认知] 视觉模型提供商: {self.vision_provider_id}")
         logger.info(f"[角色认知] 特征阈值 - 发色: {self.hair_color_threshold}, 眼白: {self.eye_white_threshold}, 眼瞳: {self.eye_pupil_threshold}, 种族: {self.racial_feature_threshold}")
     
@@ -80,40 +80,45 @@ class SelfRecognitionPlugin(Star):
     @filter.command("认识自己")
     async def teach_self(self, event: AstrMessageEvent):
         """教 AI 认识自己的形象"""
-        event.stop_event()
-        async for result in self.self_recognition_handler.handle_teach_self(event):
-            yield result
+        try:
+            async for result in self.self_recognition_handler.handle_teach_self(event):
+                yield result
+        finally:
+            event.stop_event()
     
     # ==================== 指令：认识角色 ====================
     @filter.command("认识角色")
     async def teach_character(self, event: AstrMessageEvent):
         """教 AI 认识其他角色的形象"""
-        event.stop_event()
-        async for result in self.character_recognition_handler.handle_teach_character(event):
-            yield result
+        try:
+            async for result in self.character_recognition_handler.handle_teach_character(event):
+                yield result
+        finally:
+            event.stop_event()
     
     # ==================== 指令：角色列表 ====================
     @filter.command("角色列表")
     async def list_characters(self, event: AstrMessageEvent):
         """查看已认识的角色列表"""
-        event.stop_event()
-        result = await self.character_recognition_handler.list_known_characters(event)
-        yield event.plain_result(result)
+        try:
+            result = await self.character_recognition_handler.list_known_characters(event)
+            yield event.plain_result(result)
+        finally:
+            event.stop_event()
     
     # ==================== 指令：设置查看 ====================
     @filter.command("角色认知设置")
     async def show_settings(self, event: AstrMessageEvent):
         """查看当前插件设置"""
-        event.stop_event()
-        
-        if self.milvus_manager.use_custom_embedding:
-            embedding_mode = f"自定义向量模型 (API: {self.milvus_manager.custom_embedding_api_base or '默认阿里云'}, 模型: {self.milvus_manager.custom_embedding_model}, 维度: {self.milvus_manager.custom_embedding_dim})"
-        else:
-            embedding_mode = "未配置向量模型 API Key"
-        
-        milvus_status = "✅ 已连接" if self.milvus_manager.is_connected() else f"❌ 未连接 ({self.milvus_manager.get_error()})"
-        
-        msg = f"""🧠 角色认知插件当前设置 (v2.1.4)：
+        try:
+            if self.milvus_manager.use_custom_embedding:
+                embedding_mode = f"自定义向量模型 (API: {self.milvus_manager.custom_embedding_api_base or '默认阿里云'}, 模型: {self.milvus_manager.custom_embedding_model}, 维度: {self.milvus_manager.custom_embedding_dim})"
+            else:
+                embedding_mode = "未配置向量模型 API Key"
+            
+            milvus_status = "✅ 已连接" if self.milvus_manager.is_connected() else f"❌ 未连接 ({self.milvus_manager.get_error()})"
+            
+            msg = f"""🧠 角色认知插件当前设置 (v2.1.5)：
 
 📦 Milvus 状态: {milvus_status}
 📍 地址: {self.milvus_manager.milvus_host}:{self.milvus_manager.milvus_port}
@@ -134,7 +139,9 @@ class SelfRecognitionPlugin(Star):
 • /角色认知设置 - 查看当前配置
 • 发送图片 - 自动识别图中是否有自己或认识的角色
 """
-        yield event.plain_result(msg)
+            yield event.plain_result(msg)
+        finally:
+            event.stop_event()
     
     # ==================== 自动识别图片 ====================
     @filter.event_message_type(filter.EventMessageType.ALL)
@@ -145,13 +152,6 @@ class SelfRecognitionPlugin(Star):
         if not image_comps:
             return
         
-        event.stop_event()
-        
-        # 检查 Milvus 连接
-        if not self.milvus_manager.is_connected():
-            logger.warning("[角色认知] Milvus 未连接，跳过角色认知功能")
-            return
-        
         # 获取图片
         img_url_or_path = self.image_processor.get_image_url_from_component(image_comps[0])
         if not img_url_or_path:
@@ -160,16 +160,21 @@ class SelfRecognitionPlugin(Star):
         # 解析图片数据
         image_data = await self.image_processor.resolve_image_data(img_url_or_path)
         if not image_data:
-            await event.send(MessageChain([Plain("❌ 图片获取失败，请重试")]))
             return
         
         # 保存临时图片
         temp_file_path = self.image_processor.save_temp_image(image_data)
         if not temp_file_path:
-            await event.send(MessageChain([Plain("❌ 图片处理失败")]))
             return
         
         try:
+            event.stop_event()
+            
+            # 检查 Milvus 连接
+            if not self.milvus_manager.is_connected():
+                logger.warning("[角色认知] Milvus 未连接，跳过角色认知功能")
+                return
+            
             # 读取图片并转为base64
             with open(temp_file_path, "rb") as f:
                 img_bytes = f.read()

@@ -1,6 +1,6 @@
 # 角色认知插件
 
-[![Version](https://img.shields.io/badge/version-2.1.4-blue.svg)](https://github.com/TARS-snail/astrbot_plugin_self_recognition)
+[![Version](https://img.shields.io/badge/version-2.1.5-blue.svg)](https://github.com/TARS-snail/astrbot_plugin_self_recognition)
 [![AstrBot](https://img.shields.io/badge/AstrBot-3.5+-green.svg)](https://github.com/AstrBotDevs/AstrBot-desktop)
 
 > 让 AI 认识自己和其他角色的形象，自动识别图片中的角色并以自然方式回应
@@ -136,7 +136,10 @@ astrbot_plugin_self_recognition/
 
 ## 🔄 更新日志
 
-### v2.1.3
+### v2.1.5
+- 🐛 **修正会话控制**：参考 AstrBot 官方文档规范，将 `event.stop_event()` 移到 `finally` 块中，确保异常时事件也能正确停止
+
+### v2.1.4
 - 🐛 **修复图片处理后回复格式突变**：将图片分析信息从 `system_prompt` 移到用户 `prompt` 中，不再覆盖系统提示词，保留角色原有语言风格和回复长度习惯
 
 ### v2.1.2
